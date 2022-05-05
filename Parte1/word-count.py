@@ -12,7 +12,7 @@ from pyspark.sql.functions import split, explode, col
 
 spark = SparkSession \
     .builder \
-    .appName("StructuredNetworkWordCount") \
+    .appName("WordCount-PSPD") \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("WARN")

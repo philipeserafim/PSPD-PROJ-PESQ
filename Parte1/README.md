@@ -1,8 +1,8 @@
-# PROJETO DE PESQUISA - Programação de Streaming em clusters
+## Parte 1 - Spark Streaming contabilizando palavras de entrada via socket
 
-## **Configurando o ambiente**
+### **Configurando o ambiente**
 
-### Instalar OpenJDK e OpenSSH:
+#### Instalar OpenJDK e OpenSSH:
 
 ```
 sudo apt update
@@ -10,8 +10,7 @@ sudo apt install openjdk-8-jdk -y
 java -version; javac -version
 sudo apt install openssh-server openssh-client -y
 ```
-
-### Criar um usuário separado para executar o ambiente:
+#### Criar um usuário separado para executar o ambiente:
 
 ```
 sudo adduser hadoop
@@ -22,14 +21,14 @@ chmod 0600 ~/.ssh/authorized_keys
 ssh localhost
 ```
 
-### Instalar o Hadoop:
+#### Instalar o Hadoop:
 
 ```
 wget https://dlcdn.apache.org/hadoop/common/hadoop-3.2.3/hadoop-3.2.3.tar.gz
 tar xzf hadoop-3.2.3.tar.gz
 ```
 
-### Adicionando o Hadoop ao Bash:
+#### Adicionando o Hadoop ao Bash:
 
 Abrir o arquivo do bash usando o comando:
 
@@ -57,7 +56,7 @@ Aplicar alterações ao bash:
 source ~/.bashrc
 ```
 
-### Configurar o Java:
+#### Configurar o Java:
 
 Executar esses comandos:
 
@@ -73,7 +72,7 @@ Ao abrir o arquivo do ambiente do Hadoop, remover o comentário da variável $JA
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 ```
 
-### Configurando o ambiente Single Node do Hadoop
+#### Configurando o ambiente Single Node do Hadoop
 
 Abrir o arquivo:
 
@@ -184,7 +183,7 @@ $HADOOP_HOME/sbin/start-dfs.sh
 jps
 ```
 
-### Instalar e configurar o Apache Spark
+#### Instalar e configurar o Apache Spark
 
 Para instalar o Spark, digite os seguintes comandos:
 
@@ -193,7 +192,7 @@ wget https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz
 tar xzf spark-3.2.1-bin-hadoop3.2.tgz
 ```
 
-#### Configurando o ambiente
+##### Configurando o ambiente
 
 Abra o arquivo de bash:
 
@@ -214,48 +213,57 @@ Aplique as alterações feitas no arquivo de bash:
 source ~/.bashrc
 ```
 
-#### Iniciando o Spark
+##### Iniciando o Spark
 
 Para iniciar o Spark, execute os seguintes comandos:
 
 ```
 start-master.sh
-start-worker.sh spark://ubuntu:7077
+start-worker.sh spark://<name>:7077
+```
+onde o ```<name>``` deve ser substituído pelo nome que aparece no [master](http://localhost:8080) ou o resultado do comando ```hostname``` (executado no terminal).
+#### Como rodar
+Antes de rodar, é necessário ter em mente a necessidade de repetir alguns passos que são realizados durante a instalação, e são eles:
+
+ - Utilizar o usuário criado especificadamente para o hadoop
+```
+su - hadoop
 ```
 
-### Como rodar
+ - Realizar a conexão, via ssh, ao localhost utilizando o usuário hadoop
+```
+ssh localhost
+```
 
-Inicialize o Netcat para envio das palavras:
+Para então realizar a execução normalmente, para isso inicialize o Netcat para envio das palavras:
 
 ```
-nc -v -lk -p 9090
+nc -lk -p 9090
 ```
 
 Na pasta onde está o projeto, digite o seguinte comando:
 
 ```
-$SPARK_HOME/bin/spark-submit --master local[2] word-count.py --hostname localhost --port 9090
+spark-submit --master local[2] word-count.py localhost 9999
 ```
 
-## **Primeira parte - Spark Streaming contabilizando palavras de entrada via socket**
+### **Primeira parte - Spark Streaming contabilizando palavras de entrada via socket**
 
 Nesse caso, os alunos devem instalar a API Apache Spark Streaming (https://spark.apache.org/streaming/) em um cluster (envolvendo mais de um host) e fazer uma aplicação que (i) consiga ler palavras enviadas a esse servidor à parGr de um socket TCP ou UDP, (ii) contabilize o total de palavras recebidas pelo socket e o número de ocorrências de cada palavra, durante o tempo de aGvidade do servidor e (iii) apresente o resultado dessa contabilização em arquivo ou console, de modo que seja possível perceber a dinâmica de leitura/contabilização das entradas.
 
-### Executando o Word Count
+#### Executando o Word Count
 
 Inicie o Netcat para enviar as palavras:
 
 ```
-nc -v -lk -p 9999
+nc -lk -p 9999
 ```
 
 Execute a aplicação digitando o seguinte comando na pasta onde o programa está localizado:
 ```
-$SPARK_HOME/bin/spark-submit --master local[2] word-count.py --hostname localhost --port 9090
+SPARK_HOME/bin/spark-submit --master local[2] word-count.py localhost 9090
 ```
-
-
-## Referências
+### Bibliografia
 
 - https://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html
 
