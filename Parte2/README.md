@@ -133,3 +133,17 @@ Para a instalação do Pandas, Numpy, Matplotlib e Kafka-Python, execute o coman
 
 
 ## Executando
+
+### Crie os *topics* necessários
+
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic PSPD-PROJ --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic p-words --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic r-words --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic s-words --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic words_6 --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic words_8 --bootstrap-server localhost:9092```
+```~/kafka_2.13-3.1.0/bin/kafka-topics.sh  --create --replication-factor 1 --partitions 1 --topic words_11 --bootstrap-server localhost:9092```
+
+Então execute ```spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1 word-count.py --master localhost 9999```
+
+E, em dois terminais diferentes, também conectados ao usuário hadoop e localhost, execute: ```python3 consumer.py``` e ```python3 producer.py```. 
