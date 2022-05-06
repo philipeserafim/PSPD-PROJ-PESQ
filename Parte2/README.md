@@ -3,39 +3,65 @@
 ### **Configurando o ambiente**
 
 #### Spark
-É necessário instalar o Spark, entretanto ele já foi instalado na [Parte 1]("./../../Parte1/README.md") do experimento. Para conferir se a instalação está viável para uso, pode-se realizar os seguintes passos:
-
-- Acessar o usuário criado para a [Parte 1]("./../../Parte1/README.md") (as configurações de acesso ao spark foram realizadas nesse usuário específico, por conveniência podemos utilizar o mesmo usuário para evitar a necessidade de realizar a instalação e configuração novamente)
-
-```su - hadoop```
-
- - Acessar o localhost via ssh
-```ssh localhost```
-
- - Conferir instalação do JDK
-```java -version```
-
-- Tentar subir o master e o worker, utilizando dos mesmos comando da [Parte 1]("./../../Parte1/README.md")
+ - Instalando Java
 
 ```
+sudo apt update
+sudo apt install default-jdk -y
+java -version
+```
+
+ - Instalar Apache Spark
+
+```
+sudo apt install curl mlocate git scala -y
+wget https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz
+tar xzf spark-3.2.1-bin-hadoop3.2.tgz
+```
+Então deve-se mover o spark para ```/opt/spark```, para isso
+```
+sudo mkdir /opt/spark
+sudo mv spark-3.2.0-bin-hadoop3.2/* /opt/spark
+sudo chmod -R 777 /opt/spark
+```
+
+Adicionar as variáveis de ambiente necessárias
+```sudo nano ~/.bashrc```
+```
+export SPARK_HOME=/opt/spark
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+```
+
+Por último, deve-se aplicar as alterações e iniciar os spark
+
+```
+source ~/.bashrc
 start-master.sh
-start-worker.sh spark://<name>:7077
+start-worker.sh spark://<nome-do-computador>:7077
 ```
-onde o ```<name>``` deve ser substituído pelo nome que aparece no [master](http://localhost:8080) ou o resultado do comando ```hostname``` (executado no terminal).
-
-Caso tenha conseguido todos os passos anteriores sem nenhum problema, significa que o Spark está instalado e configurado para o usuário em questão, caso contrário, recomenda-se retornar à [Parte 1]("./../../Parte1/README.md") realizar a parte de **Instalação e configuração do ambiente**.
 
 #### Kafka
-A instalação do kafka recomenda a criação de um usuário exclusivo, mas como já está sendo utilizado um usuário específico para o projeto, pode-se mantê-lo, e então realizar o download e extração do arquivos necessários
+
+Criar e configurar um usuário específico para o kafka
+
+```
+sudo adduser kafka
+sudo adduser kafka sudo
+su -l kafka
+```
 
  - Instalando
-```wget "https://dlcdn.apache.org/kafka/3.1.0/kafka_2.13-3.1.0.tgz"```
-```tar -xvzf kafka_2.13-3.1.0.tgz```
+```
+  mkdir ~/Downloads
+wget "https://dlcdn.apache.org/kafka/3.1.0/kafka_2.13-3.1.0.tgz" -o ~/Downloads/kafka.tgz
+mkdir ~/kafka && cd ~/kafka
+tar -xvzf ~/Downloads/kafka.tgz --strip 1
+```
 
  - Configurando
 
 Realizar algumas mudanças no arquivo server.properties
-```nano kafka_2.13-3.1.0/config/server.properties```
+```nano ~/kafka/config/server.properties```
 
 Adicionar ao final do arquivo 
 ```delete.topic.enable = true``` 
@@ -53,9 +79,9 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-User=hadoop
-ExecStart=/home/hadoop/kafka_2.13-3.1.0/bin/zookeeper-server-start.sh /home/hadoop/kafka_2.13-3.1.0/config/zookeeper.properties
-ExecStop=/home/hadoop/kafka_2.13-3.1.0/bin/zookeeper-server-stop.sh
+User=kafka
+ExecStart=/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+ExecStop=/home/kafka/kafka/bin/zookeeper-server-stop.sh
 Restart=on-abnormal
 
 [Install]
@@ -72,9 +98,9 @@ After=zookeeper.service
 
 [Service]
 Type=simple
-User=hadoop
-ExecStart=/bin/sh -c '/home/hadoop/kafka_2.13-3.1.0/bin/kafka-server-start.sh /home/hadoop/kafka_2.13-3.1.0/config/server.properties > /home/hadoop/kafka_2.13-3.1.0/kafka.log 2>&1'
-ExecStop=/home/hadoop/kafka_2.13-3.1.0/bin/kafka-server-stop.sh
+User=kafka
+ExecStart=/bin/sh -c '/home/kafka/kafka/bin/kafka-server-start.sh /home/kafka/kafka/config/server.properties > /home/kafka/kafka/kafka.log 2>&1'
+ExecStop=/home/kafka/kafka/bin/kafka-server-stop.sh
 Restart=on-abnormal
 
 [Install]

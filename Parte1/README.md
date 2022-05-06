@@ -261,7 +261,7 @@ nc -lk -p 9999
 
 Execute a aplicação digitando o seguinte comando na pasta onde o programa está localizado:
 ```
-SPARK_HOME/bin/spark-submit --master local[2] word-count.py localhost 9090
+spark-submit --master local[2] word-count.py localhost 9090
 ```
 ### Bibliografia
 
