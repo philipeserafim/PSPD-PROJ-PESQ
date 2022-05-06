@@ -33,11 +33,11 @@ words = lines.select(
 countWords = words \
   .groupBy("word") \
   .count() \
+  .orderBy("count", ascending=False) \
   .writeStream \
   .outputMode("complete")\
   .format("console") \
-  .trigger(processingTime='7 second')\
-  .option('numRows', 20)\
+  .option('numRows', 10)\
   .start()
 
 p_words = words \
@@ -48,10 +48,10 @@ p_words = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("checkpointLocation", "./checkpoints-pWords") \
   .option("topic", "p-words")\
-  .trigger(processingTime='5 second')\
   .start()
 
 r_words = words \
@@ -62,10 +62,10 @@ r_words = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("topic", "r-words")\
   .option("checkpointLocation", "./checkpoints-rWords") \
-  .trigger(processingTime='5 second')\
   .start()
 
 s_words = words \
@@ -76,10 +76,10 @@ s_words = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("topic", "s-words")\
   .option("checkpointLocation", "./checkpoints-sWords") \
-  .trigger(processingTime='5 second')\
   .start()
 
 words6 = words \
@@ -90,10 +90,10 @@ words6 = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("topic", "words-6")\
   .option("checkpointLocation", "./checkpoints-6words") \
-  .trigger(processingTime='5 second')\
   .start()
 
 words8 = words \
@@ -104,10 +104,10 @@ words8 = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("topic", "words-8")\
   .option("checkpointLocation", "./checkpoints-8words") \
-  .trigger(processingTime='5 second')\
   .start()
 
 words11 = words \
@@ -118,10 +118,10 @@ words11 = words \
   .writeStream \
   .outputMode("update")\
   .format("kafka")\
+  .trigger(processingTime='30 second')\
   .option("kafka.bootstrap.servers", "localhost:9092")\
   .option("topic", "11-words")\
   .option("checkpointLocation", "./checkpoints-11words") \
-  .trigger(processingTime='5 second')\
   .start()
 
 spark.streams.awaitAnyTermination()
