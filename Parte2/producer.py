@@ -4,7 +4,6 @@ textInput = open('inputText.txt', 'r').read()
 producerConfig = KafkaProducer(bootstrap_servers='localhost:9092',
                          value_serializer=lambda v: str(v).encode('utf-8'))
 
-while(True):
-    if (producerConfig.send('PSPD-PROJ', textInput)):
-        break
-	
+producerConfig.send('PSPD-PROJ', textInput)
+producerConfig.flush()
+    
