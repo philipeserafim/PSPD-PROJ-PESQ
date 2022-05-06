@@ -1,127 +1,119 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import split, explode, col
-import pyspark.sql.functions as F
+import pandas as pd
+from kafka import KafkaConsumer
 
-spark = SparkSession \
-  .builder \
-  .appName("WordCount-PSPD") \
-  .config("spark.scheduler.mode", "FAIR")\
-  .config("spark.streaming.concurrentJobs","10")\
-  .config("spark.sql.streaming.stateStore.stateSchemaCheck", False) \
-  .getOrCreate()
+data_received = KafkaConsumer('p_words','s_words','r_words', 'words-6','words-8','words-11', bootstrap_servers='localhost:9092')
 
-spark.sparkContext.setLogLevel("WARN")
+p_words = {
+  "words": [],
+  "p_words": [],
+  "batch": 0,
+  "count": 0,
+}
+s_words = {
+  "words": [],
+  "s_words": [],
+  "batch": 0,
+  "count": 0,
+}
 
-# Create DataFrame representing the stream of input lines from connection to localhost:9092
-lines = spark \
-  .readStream\
-  .format("kafka")\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("subscribe", "PSPD-PROJ") \
-  .load()
+r_words = {
+  "words": [],
+  "r_words": [],
+  "batch": 0,
+  "count": 0,
+}
 
-df = lines.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+words_6 = {
+  "words": [],
+  "words_6": [],
+  "batch": 0,
+  "count": 0,
+}
 
-# Split the lines into words
-words = lines.select(
-   explode(
-      split(lines.value, " ")
-   ).alias("word")
-)
+words_8 = {
+  "words": [],
+  "words_8": [],
+  "batch": 0,
+  "count": 0,
+}
 
-# Start running the query that prints the running counts to the console
-countWords = words \
-  .groupBy("word") \
-  .count() \
-  .orderBy("count", ascending=False) \
-  .writeStream \
-  .outputMode("complete")\
-  .format("console") \
-  .option('numRows', 10)\
-  .start()
+words_11 = {
+  "words": [],
+  "words_11": [],
+  "batch": 0,
+  "count": 0,
+}
 
-p_words = words \
-  .filter(F.upper(F.col("word").substr(1, 1)) == "P")\
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("checkpointLocation", "./checkpoints-pWords") \
-  .option("topic", "p-words")\
-  .start()
+while(True):
+  for msg in data_received:
+    if (msg.topic == 'p_words'):
+      print(msg.topic)
+      y = int(msg.value)
+      r_words["p_words"].append(y - p_words["count"])
+      p_words["count"] = y
+      p_words["batch"] = p_words["batch"] + 1
+      p_words["words"].append(p_words["batch"])
 
-r_words = words \
-  .filter(F.upper(F.col("word").substr(1,1)) == "R") \
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("topic", "r-words")\
-  .option("checkpointLocation", "./checkpoints-rWords") \
-  .start()
+      dataFrame = pd.DataFrame({'p_words': r_words["p_words"], 'batch': p_words["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('p_words.csv', index=False)
 
-s_words = words \
-  .filter(F.upper(F.col("word").substr(1,1)) == "S") \
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("topic", "s-words")\
-  .option("checkpointLocation", "./checkpoints-sWords") \
-  .start()
+    if (msg.topic == 's_words'):
+      print(msg.topic)
+      y = int(msg.value)
+      r_words["s_words"].append(y - s_words["count"])
+      s_words["count"] = y
+      s_words["batch"] = s_words["batch"] + 1
+      s_words["words"].append(s_words["batch"])
 
-words6 = words \
-  .filter(F.length("word") == "6") \
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("topic", "words-6")\
-  .option("checkpointLocation", "./checkpoints-6words") \
-  .start()
+      dataFrame = pd.DataFrame({'s_words': r_words["s_words"], 'batch': s_words["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('s_words.csv', index=False)
 
-words8 = words \
-  .filter(F.length("word") == "8") \
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("topic", "words-8")\
-  .option("checkpointLocation", "./checkpoints-8words") \
-  .start()
+    if (msg.topic == 'r_words'):
+      print(msg.topic)
+      y = int(msg.value)
+      r_words["r_words"].append(y - r_words["count"])
+      r_words["count"] = y
+      r_words["batch"] = r_words["batch"] + 1
+      r_words["words"].append(r_words["batch"])
 
-words11 = words \
-  .filter(F.length("word") == "11") \
-  .groupBy() \
-  .count() \
-  .selectExpr("cast (count as string) value") \
-  .writeStream \
-  .outputMode("update")\
-  .format("kafka")\
-  .trigger(processingTime='30 second')\
-  .option("kafka.bootstrap.servers", "localhost:9092")\
-  .option("topic", "11-words")\
-  .option("checkpointLocation", "./checkpoints-11words") \
-  .start()
+      dataFrame = pd.DataFrame({'r_words': r_words["r_words"], 'batch': r_words["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('r_words.csv', index=False)
 
-spark.streams.awaitAnyTermination()
+    if (msg.topic == 'words_6'):
+      print(msg.topic)
+      y = int(msg.value)
+      words_6["words_6"].append(y - words_6["count"])
+      words_6["count"] = y
+      words_6["batch"] = words_6["batch"] + 1
+      words_6["words"].append(words_6["batch"])
+
+      dataFrame = pd.DataFrame({'words_6': words_6["words_6"], 'batch': words_6["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('words_6.csv', index=False)
+
+    if (msg.topic == 'words_8'):
+      print(msg.topic)
+      y = int(msg.value)
+      words_8["words_8"].append(y - words_8["count"])
+      words_8["count"] = y
+      words_8["batch"] = words_8["batch"] + 1
+      words_8["words"].append(words_8["batch"])
+
+      dataFrame = pd.DataFrame({'words_8': words_8["words_8"], 'batch': words_8["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('words_8.csv', index=False)
+
+    if (msg.topic == 'words_11'):
+      print(msg.topic)
+      y = int(msg.value)
+      words_11["words_11"].append(y - words_11["count"])
+      words_11["count"] = y
+      words_11["batch"] = words_11["batch"] + 1
+      words_11["words"].append(words_11["batch"])
+
+      dataFrame = pd.DataFrame({'words_11': words_11["words_11"], 'batch': words_11["words"]})
+      print(dataFrame.to_string())
+      dataFrame.to_csv('words_11.csv', index=False)
